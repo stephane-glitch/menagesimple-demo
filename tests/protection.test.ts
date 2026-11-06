@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { dansLaLimite, memeOrigine } from "@/lib/protection";
 
-const req = (entetes: Record<string, string>) => new Request("https://trusquin.vercel.app/api/ia", { method: "POST", headers: entetes });
+const req = (entetes: Record<string, string>) => new Request("https://demo.exemple.test/api/ia", { method: "POST", headers: entetes });
 
 describe("protection des routes serveur", () => {
   it("accepte une requête venant d'une page du site", () => {
     expect(memeOrigine(req({ "sec-fetch-site": "same-origin" }))).toBe(true);
-    expect(memeOrigine(req({ origin: "https://trusquin.vercel.app" }))).toBe(true);
+    expect(memeOrigine(req({ origin: "https://demo.exemple.test" }))).toBe(true);
   });
 
   it("refuse un autre site et un script sans en-têtes de navigateur", () => {

@@ -15,7 +15,7 @@ La page « Méthode » de l'application détaille ce qui est réel, fictif ou si
 
 ```bash
 npm install
-npm test
+npm test        # 55 tests : règles métier, recherche travail.swiss, protections du serveur, deux langues
 npm run dev
 ```
 
@@ -31,7 +31,7 @@ node tests/e2e/langue.js
 
 `BASE=https://…` pour viser une version déployée.
 
-Sans clé d'API, l'application fonctionne : des règles simples remplacent l'IA et l'écran l'indique.
+Sans clé d'API, l'application fonctionne : des règles simples remplacent l'IA.
 Pour brancher l'IA, créer un fichier `.env.local` avec l'une des deux clés :
 
 ```bash
@@ -41,11 +41,25 @@ ANTHROPIC_API_KEY=sk-ant-... # Claude Opus 5.5, prioritaire si les deux clés ex
 
 Le choix du fournisseur se fait dans `lib/ia/serveur.ts`.
 
-## Déployer sur Vercel
+## Mettre en production
 
-1. Importer le dépôt dans Vercel (Node 24, fixé dans `package.json`).
-2. Ajouter la variable d'environnement `GEMINI_API_KEY` (ou `ANTHROPIC_API_KEY`) en Production et Preview, puis redéployer : une variable ajoutée après coup ne s'applique qu'au déploiement suivant.
-3. Déployer. Aucune base de données : l'état de la démonstration vit dans le navigateur de chaque visiteur.
+L'application est un serveur Node.js classique (Node 24, fixé dans `package.json`), sans base de données : l'état de la démonstration vit dans le navigateur de chaque visiteur. Elle s'héberge donc chez n'importe quel fournisseur. Pour un usage réel en Suisse, je recommande un hébergement aux données localisées en Suisse ou en Europe, utile pour la loi sur la protection des données (nLPD) :
+
+- **OVHcloud** : un serveur privé virtuel (VPS) ou une instance Public Cloud, avec un proxy HTTPS (Nginx ou Caddy) devant l'application ;
+- **AWS** : région Zurich (`eu-central-2`), avec App Runner ou ECS pour un service géré, ou EC2 pour un serveur simple.
+
+Étapes, quel que soit l'hébergeur :
+
+```bash
+npm ci
+npm run build
+PORT=3000 npm start
+```
+
+1. Définir la clé d'IA (`GEMINI_API_KEY` ou `ANTHROPIC_API_KEY`) dans les variables d'environnement du serveur, jamais dans le code.
+2. Servir le site uniquement en HTTPS. Les en-têtes de sécurité sont envoyés par l'application elle-même (`next.config.ts`) : ils s'appliquent partout.
+3. Fixer un plafond de dépenses et de requêtes par jour sur la clé, chez le fournisseur d'IA.
+4. Avec plusieurs serveurs derrière un répartiteur de charge, partager le compteur d'appels de `lib/protection.ts` (par exemple dans Redis) : en mémoire, chaque serveur compte de son côté.
 
 ## Organisation du code
 
@@ -55,7 +69,7 @@ Le choix du fournisseur se fait dans `lib/ia/serveur.ts`.
 - `lib/protection.ts` : routes serveur réservées aux pages du site et nombre d'appels limité.
 - `lib/jobroom.ts` : format de la recherche travail.swiss, anonymisation des profils.
 - `lib/donnees/` : données fictives à graine fixe.
-- `tests/` : tests vitest.
+- `tests/` : tests vitest, et parcours de bout en bout dans `tests/e2e/`.
 
 ## Sécurité
 
